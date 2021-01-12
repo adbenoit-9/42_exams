@@ -1,1 +1,3 @@
-# 42_Exams
+# Exams
+
+Training for exams
