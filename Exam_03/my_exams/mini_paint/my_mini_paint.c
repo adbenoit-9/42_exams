@@ -48,17 +48,19 @@ int		get_zone(FILE *stream, t_zone *zone)
 	return (0);
 }
 
-int		is_border(float xa, float ya, float xb, float yb)
+int		is_border(float xa, float ya, float xb, float yb, float rad)
 {
 	float	d;
 
 	d = sqrtf((xa - xb) * (xa - xb) + (ya - yb) * (ya - yb));
-	// printf("%f\n", d);
-	if (d > 1.0)
-		return (-1);
-	else if (d < 1.0)
-		return (0);
-	return (1);
+	if (d <= rad)
+	{
+		if ((rad - d) <= 1.0)
+			return (1);
+		else
+			return (0);
+	}
+	return (-1);
 	
 }
 
@@ -73,8 +75,8 @@ int		draw_cercle(t_draw draw, t_zone zone, char **paint)
 		j = 0;
 		while (j < zone.w)
 		{
-			if (is_border(i, j, draw.x, draw.y) == 1 ||
-			(draw.type == 'C' && is_border(i, j, draw.x, draw.y) != -1))
+			if (is_border(i, j, draw.x, draw.y, draw.rad) == 1 ||
+			(draw.type == 'C' && is_border(i, j, draw.x, draw.y, draw.rad) != -1))
 				paint[i][j] = draw.c;
 			++j;
 		}
@@ -110,6 +112,8 @@ int		drawing(FILE *stream, t_zone zone)
 		&draw.y, &draw.rad, &draw.c);
 	}
 	i = 0;
+	if (draw.type != 'C' && draw.type != 'c')
+		return (1);
 	while (i < zone.h)
 	{
 		ft_putstr(paint[i]);
