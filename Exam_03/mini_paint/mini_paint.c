@@ -1,89 +1,45 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   my_mini_paint.c                                    :+:      :+:    :+:   */
+/*   mini_paint.c                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: adbenoit <adbenoit@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/01/12 22:46:32 by adbenoit          #+#    #+#             */
-/*   Updated: 2021/01/12 22:52:24 by adbenoit         ###   ########.fr       */
+/*   Updated: 2021/01/13 02:41:00 by adbenoit         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <math.h>
-#include <string.h>
+#include "mini_paint.h"
 
-typedef struct s_zone
+static void	init_draw(t_draw *draw)
 {
-	int		w;
-	int		h;
-	char	bc;
-}				t_zone;
-
-typedef struct s_draw
-{	
-	char	type;
-	char	c;
-	float	rad;
-	float	x;
-	float	y;
-}				t_draw;
-
-/*
-** utils functions
-*/
-
-int		ft_strlen(char *str)
-{
-	int	i;
-
-	i = 0;
-	while (str[i])
-		++i;
-	return (i);
+	draw->type = 0;
+	draw->c = 0;
+	draw->rad = 0;
+	draw->x = 0;
+	draw->y = 0;
 }
 
-int		ft_putstr(char *str)
+static int	set_paint(char **paint, t_zone zone)
 {
-	write(1, str, ft_strlen(str));
-	return (1);
-}
-
-void		ft_puttab(char **tab)
-{
-	int	i;
+	int i;
 
 	i = 0;
-	while (tab[i])
+	if (!paint)
+		return (1);
+	while (i < zone.h)
 	{
-		ft_putstr(tab[i]);
-		write(1, "\n", 1);
+		if (!(paint[i] = calloc(1, zone.w + 1)))
+			return (1);
+		memset(paint[i], zone.bc, zone.w);
 		++i;
 	}
+	paint[i] = 0;
+	return (0);
 }
 
-int		ft_freetab(char **tab)
-{
-	int	i;
-
-	i = 0;
-	while (tab[i])
-	{
-		free(tab[i]);
-		++i;
-	}
-	free(tab);
-	return (1);
-}
-
-/*
-** mini_paint functions
-*/
-
-int		is_in_circle(float xa, float ya, t_draw draw)
+static int	is_in_circle(float xa, float ya, t_draw draw)
 {
 	float	d;
 
@@ -98,7 +54,7 @@ int		is_in_circle(float xa, float ya, t_draw draw)
 	
 }
 
-int		draw_circle(t_draw draw, t_zone zone, char **paint)
+static int	draw_circle(t_draw draw, t_zone zone, char **paint)
 {
 	int	i;
 	int	j;
@@ -120,34 +76,7 @@ int		draw_circle(t_draw draw, t_zone zone, char **paint)
 	return (0);
 }
 
-void		init_draw(t_draw *draw)
-{
-	draw->type = 0;
-	draw->c = 0;
-	draw->rad = 0;
-	draw->x = 0;
-	draw->y = 0;
-}
-
-int			init_paint(char **paint, t_zone zone)
-{
-	int i;
-
-	i = 0;
-	if (!paint)
-		return (1);
-	while (i < zone.h)
-	{
-		if (!(paint[i] = calloc(1, zone.w + 1)))
-			return (1);
-		memset(paint[i], zone.bc, zone.w);
-		++i;
-	}
-	paint[i] = 0;
-	return (0);
-}
-
-int		drawing(FILE *stream, t_zone zone)
+static int	drawing(FILE *stream, t_zone zone)
 {
 	int		ret;
 	t_draw	draw;
@@ -155,20 +84,17 @@ int		drawing(FILE *stream, t_zone zone)
 	char	**paint;
 
 	paint = (char **)malloc(sizeof(char *) * (zone.h + 1));
-	if (init_paint(paint, zone) == 1)
+	if (set_paint(paint, zone) == 1)
 		return (ft_freetab(paint));
 	init_draw(&draw);
-	ret = fscanf(stream, "%c%c %f %f %f %c", &n, &draw.type, &draw.x,
-	&draw.y, &draw.rad, &draw.c);
-	while (ret == 6)
+	while ((ret = fscanf(stream, "%c%c %f %f %f %c", &n, &draw.type,
+	&draw.x, &draw.y, &draw.rad, &draw.c)) == 6)
 	{
 		if ((draw.type != 'c' && draw.type != 'C') || n != '\n' ||
 		draw.rad <= 0.0 || draw.c == 0 || draw.c == '\n')
 			return (ft_freetab(paint));
 		draw_circle(draw, zone, paint);
 		init_draw(&draw);
-		ret = fscanf(stream, "%c%c %f %f %f %c", &n, &draw.type, &draw.x,
-		&draw.y, &draw.rad, &draw.c);
 	}
 	if (draw.type != '\0' && ret != -1)
 		return (ft_freetab(paint));
@@ -177,7 +103,7 @@ int		drawing(FILE *stream, t_zone zone)
 	return (0);
 }
 
-int		get_zone(FILE *stream, t_zone *zone)
+static int	get_zone(FILE *stream, t_zone *zone)
 {
 	size_t	ret;
 
@@ -189,7 +115,7 @@ int		get_zone(FILE *stream, t_zone *zone)
 	return (0);
 }
 
-int 	main(int ac, char **av)
+int 		main(int ac, char **av)
 {
 	FILE	*stream;
 	t_zone	zone;
