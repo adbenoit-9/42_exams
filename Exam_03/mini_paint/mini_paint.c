@@ -6,7 +6,7 @@
 /*   By: adbenoit <adbenoit@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/01/12 22:46:32 by adbenoit          #+#    #+#             */
-/*   Updated: 2021/01/13 02:41:00 by adbenoit         ###   ########.fr       */
+/*   Updated: 2021/01/13 14:52:01 by adbenoit         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -110,7 +110,7 @@ static int	get_zone(FILE *stream, t_zone *zone)
 	ret = fscanf(stream, "%d %d %c", &zone->w, &zone->h, &zone->bc);
 	if (ret != 3)
 		return (1);
-	if (zone->w <= 0 || zone->w > 300 || zone->h <= 0 || zone->h > 300)
+	if (zone->w <= 0 || zone->w > 300 || zone->h <= 0 || zone->h > 300 || zone->bc == '\n')
 		return (1);
 	return (0);
 }
