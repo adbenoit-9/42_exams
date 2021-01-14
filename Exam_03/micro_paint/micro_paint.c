@@ -6,7 +6,7 @@
 /*   By: adbenoit <adbenoit@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/01/13 13:41:08 by adbenoit          #+#    #+#             */
-/*   Updated: 2021/01/13 14:55:24 by adbenoit         ###   ########.fr       */
+/*   Updated: 2021/01/14 12:29:24 by adbenoit         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,16 +28,6 @@ static int	init_paint(char **paint, t_zone zone)
 	}
 	paint[i] = 0;
 	return (0);
-}
-
-static void	init_draw(t_draw *draw)
-{
-	draw->type = 0;
-	draw->x = 0;
-	draw->y = 0;
-	draw->w = 0;
-	draw->h = 0;
-	draw->c = 0;
 }
 
 static int	is_in_rect(float x, float y, t_draw draw)
@@ -89,7 +79,7 @@ static int	drawing(FILE *stream, t_zone zone)
 	paint = (char **)malloc(sizeof(char *) * (zone.h + 1));
 	if (init_paint(paint, zone) == 1)
 		return (ft_freetab(paint));
-	init_draw(&draw);
+	draw.type = 0;
 	while ((ret = fscanf(stream, "%c%c %f %f %f %f %c", &n, &draw.type,
 	&draw.x, &draw.y, &draw.w, &draw.h, &draw.c)) == 7)
 	{
@@ -97,7 +87,7 @@ static int	drawing(FILE *stream, t_zone zone)
 		|| draw.w <= 0.0 || n != '\n'|| draw.c == 0 || draw.c == '\n')
 			return (ft_freetab(paint));
 		draw_rect(zone, draw, paint);
-		init_draw(&draw);
+		draw.type = 0;
 	}
 	if (draw.type != 0 && ret != -1)
 		return (ft_freetab(paint));

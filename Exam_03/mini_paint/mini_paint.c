@@ -6,20 +6,11 @@
 /*   By: adbenoit <adbenoit@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/01/12 22:46:32 by adbenoit          #+#    #+#             */
-/*   Updated: 2021/01/13 14:52:01 by adbenoit         ###   ########.fr       */
+/*   Updated: 2021/01/14 12:29:02 by adbenoit         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "mini_paint.h"
-
-static void	init_draw(t_draw *draw)
-{
-	draw->type = 0;
-	draw->c = 0;
-	draw->rad = 0;
-	draw->x = 0;
-	draw->y = 0;
-}
 
 static int	set_paint(char **paint, t_zone zone)
 {
@@ -86,7 +77,7 @@ static int	drawing(FILE *stream, t_zone zone)
 	paint = (char **)malloc(sizeof(char *) * (zone.h + 1));
 	if (set_paint(paint, zone) == 1)
 		return (ft_freetab(paint));
-	init_draw(&draw);
+	draw.type = 0;
 	while ((ret = fscanf(stream, "%c%c %f %f %f %c", &n, &draw.type,
 	&draw.x, &draw.y, &draw.rad, &draw.c)) == 6)
 	{
@@ -94,7 +85,7 @@ static int	drawing(FILE *stream, t_zone zone)
 		draw.rad <= 0.0 || draw.c == 0 || draw.c == '\n')
 			return (ft_freetab(paint));
 		draw_circle(draw, zone, paint);
-		init_draw(&draw);
+		draw.type = 0;
 	}
 	if (draw.type != '\0' && ret != -1)
 		return (ft_freetab(paint));
