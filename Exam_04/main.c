@@ -6,7 +6,7 @@
 /*   By: adbenoit <adbenoit@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/06/24 15:16:13 by adbenoit          #+#    #+#             */
-/*   Updated: 2021/06/24 19:22:12 by adbenoit         ###   ########.fr       */
+/*   Updated: 2021/06/25 14:14:16 by adbenoit         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,11 +31,10 @@ int main(int ac, char **av, char *envp[])
     {
         if (strcmp(av[i], ";") == 0)
         {
-            ft_getCmd(av + start, i, envp);
-            start = i;
+            ft_getCmd(av + start, i - start, envp);
+            start = i + 1;
         }
         ++i;
-        
     }
-    ft_getCmd(av, i, envp);
+    ft_getCmd(av + start, i, envp);
 }
