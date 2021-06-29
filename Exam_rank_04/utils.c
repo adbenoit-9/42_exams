@@ -1,30 +1,33 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   microshell.h                                       :+:      :+:    :+:   */
+/*   utils.c                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: adbenoit <adbenoit@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2021/06/24 15:14:49 by adbenoit          #+#    #+#             */
-/*   Updated: 2021/06/29 15:19:25 by adbenoit         ###   ########.fr       */
+/*   Created: 2021/06/29 14:31:51 by adbenoit          #+#    #+#             */
+/*   Updated: 2021/06/29 16:02:08 by adbenoit         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef MICROSHELL_H
-# define MICROSHELL_H
+#include "microshell.h"
 
-# include <unistd.h>
-# include <sys/wait.h>
-# include <string.h>
-# include <stdlib.h>
-# include <stdio.h>
-# include <signal.h>
+size_t	ft_strlen(char *str)
+{
+	int i;
+ 	i = 0;
+    while (str[i])
+		++i;
+	return (i);
 
+}
 
-void    lauch_cmd(char **arg, char *envp[]);
-
-size_t	ft_strlen(char *str);
-void	ft_strerror(char *str, char *arg);
-void	fatal_error(void);
-
-#endif
+void	ft_strerror(char *str, char *arg)
+{
+	write(STDERR_FILENO, str, ft_strlen(str));
+	if (arg)
+		write(STDERR_FILENO, arg, ft_strlen(arg));
+	// write(2, "\n", 1); kill print \n sur stderr ?
+	kill(0, SIGINT);
+}
+ 

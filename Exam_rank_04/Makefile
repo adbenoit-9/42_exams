@@ -6,7 +6,7 @@
 #    By: adbenoit <adbenoit@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2021/05/03 11:21:34 by adbenoit          #+#    #+#              #
-#    Updated: 2021/06/25 19:32:05 by adbenoit         ###   ########.fr        #
+#    Updated: 2021/06/29 14:50:37 by adbenoit         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -15,7 +15,7 @@ CC		=	gcc
 FLAG	=	-Wall -Wextra -Werror
 
 SRC		=	main.c microshell.c utils.c
-OBJ		=	$(SRC:.cpp=.o)
+OBJ		=	$(SRC:.c=.o)
 
 all:	$(NAME)
 
@@ -24,7 +24,7 @@ $(NAME): $(OBJ)
 	@printf "\n"
 	@echo "Compilation of \033[33;1m$(NAME)\033[0;1m: [\033[1;32mOK\033[0;1m]\033[0m"
 
-%.o:	%.cpp
+%.o:	%.c
 	@printf "\033[34;1m|\033[0;m"
 	@mkdir $(OBJ_PATH) 2> /dev/null || true
 	@$(CC) $(CFLAGS) -c $< -o $@
