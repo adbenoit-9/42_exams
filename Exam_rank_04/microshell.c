@@ -6,7 +6,7 @@
 /*   By: adbenoit <adbenoit@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/06/29 15:09:39 by adbenoit          #+#    #+#             */
-/*   Updated: 2021/06/29 16:15:42 by adbenoit         ###   ########.fr       */
+/*   Updated: 2021/06/29 16:19:42 by adbenoit         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,7 @@ void    child_process(char **arg, int *fd, int fd_in, int last, char *envp[])
  		if (dup2(fd_in, STDIN_FILENO) == -1)        // reading the output of the previous command
  			ft_strerror("error: fatal", NULL); 
  		if (last == 0)
- 			if (dup2(fd[1], STDOUT_FILENO) == -1)   // will be the input of the next commmand
+ 			if (dup2(fd[1], STDOUT_FILENO) == -1)   // set the fd output
      			ft_strerror("error: fatal", NULL);
  		close(fd_in);
  		close(fd[0]);
