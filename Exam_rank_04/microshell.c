@@ -6,7 +6,7 @@
 /*   By: adbenoit <adbenoit@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/06/29 15:09:39 by adbenoit          #+#    #+#             */
-/*   Updated: 2021/06/29 16:19:42 by adbenoit         ###   ########.fr       */
+/*   Updated: 2021/06/30 14:03:09 by adbenoit         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,11 +30,11 @@ void    child_process(char **arg, int *fd, int fd_in, int last, char *envp[])
  		close(fd_in);
  		close(fd[0]);
  		close(fd[1]);
- 		if (execve(arg[0], arg, envp) == -1)        //execute command
+ 		if (execve(arg[0], arg, envp) == -1)        // execute command
  			ft_strerror("error: cannot execute ", arg[0]);
 }
 
-int    ft_execute(char **arg, char *envp[], int fd_in)
+int    ft_execute(char **arg, char *envp[], int fd_in)  
 {
 	pid_t pid;
 	int fd[2];
