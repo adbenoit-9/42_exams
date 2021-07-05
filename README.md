@@ -1,4 +1,4 @@
-# Exams(@42Paris)
+# EXAMS (@42Paris)
 
 ## Exam Rank 03
 
