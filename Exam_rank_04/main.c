@@ -6,7 +6,7 @@
 /*   By: adbenoit <adbenoit@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/06/29 13:49:50 by adbenoit          #+#    #+#             */
-/*   Updated: 2021/06/29 16:14:47 by adbenoit         ###   ########.fr       */
+/*   Updated: 2021/07/07 17:08:37 by adbenoit         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,7 +26,7 @@ int main(int ac, char **av, char *envp[])
 		if (strcmp(av[i], ";") == 0)
 		{
 			av[i] = 0; 								// to use av until ";" => one command
-			lauch_cmd(av + start, envp);
+			launch_cmd(av + start, envp);
 			++i;
 			while (av[i] && strcmp(av[i], ";") == 0)
 			   ++i;
@@ -36,7 +36,7 @@ int main(int ac, char **av, char *envp[])
 		   ++i;
 	}
 	if (av[start])
-		lauch_cmd(av + start, envp);				//launch last command
+		launch_cmd(av + start, envp);				//launch last command
 	return (0);
 }
  

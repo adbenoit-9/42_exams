@@ -6,7 +6,7 @@
 /*   By: adbenoit <adbenoit@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/06/24 15:14:49 by adbenoit          #+#    #+#             */
-/*   Updated: 2021/07/02 17:03:09 by adbenoit         ###   ########.fr       */
+/*   Updated: 2021/07/07 17:08:26 by adbenoit         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,7 +20,7 @@
 # include <signal.h>
 
 
-void    lauch_cmd(char **arg, char *envp[]);
+void    launch_cmd(char **arg, char *envp[]);
 
 size_t	ft_strlen(char *str);
 void	ft_strerror(char *str, char *arg);
