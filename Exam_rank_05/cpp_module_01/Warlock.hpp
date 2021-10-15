@@ -6,7 +6,7 @@
 /*   By: adbenoit <adbenoit@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/10/14 17:38:14 by adbenoit          #+#    #+#             */
-/*   Updated: 2021/10/14 22:50:52 by adbenoit         ###   ########.fr       */
+/*   Updated: 2021/10/15 14:03:27 by adbenoit         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,8 +37,8 @@ class Warlock
         void                introduce() const;
 
         void                learnSpell(ASpell *);
-        void                forgetSpell(std::string);
-        void                launchSpell(std::string, const ATarget &);
+        void                forgetSpell(const std::string &);
+        void                launchSpell(const std::string &, const ATarget &);
 };
 
 #endif

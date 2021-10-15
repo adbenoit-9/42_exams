@@ -6,7 +6,7 @@
 /*   By: adbenoit <adbenoit@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/10/14 21:37:49 by adbenoit          #+#    #+#             */
-/*   Updated: 2021/10/14 23:19:48 by adbenoit         ###   ########.fr       */
+/*   Updated: 2021/10/15 13:48:20 by adbenoit         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,7 +19,7 @@ class BrickWall : public ATarget
 {
 	public:
 		BrickWall();
-		~BrickWall();
+		virtual ~BrickWall();
 		
 		virtual BrickWall*	clone() const;
 };

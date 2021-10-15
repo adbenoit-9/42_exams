@@ -6,7 +6,7 @@
 /*   By: adbenoit <adbenoit@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/10/14 21:37:49 by adbenoit          #+#    #+#             */
-/*   Updated: 2021/10/14 23:17:25 by adbenoit         ###   ########.fr       */
+/*   Updated: 2021/10/15 13:48:35 by adbenoit         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,7 +19,7 @@ class Fireball : public ASpell
 {
 	public:
 		Fireball();
-		~Fireball();
+		virtual ~Fireball();
 		
 		virtual Fireball*	clone() const;
 };

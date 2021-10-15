@@ -6,7 +6,7 @@
 /*   By: adbenoit <adbenoit@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/10/14 17:38:10 by adbenoit          #+#    #+#             */
-/*   Updated: 2021/10/14 23:03:28 by adbenoit         ###   ########.fr       */
+/*   Updated: 2021/10/15 14:03:39 by adbenoit         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,7 +43,7 @@ void    Warlock::learnSpell(ASpell *spell) {
     spells.push_back(spell->clone());
 }
 
-void    Warlock::forgetSpell(std::string name) {
+void    Warlock::forgetSpell(const std::string &name) {
     for (std::vector<ASpell *>::iterator it = spells.begin(); it != spells.end(); it++)
         if ((*it)->getName() == name)
         {
@@ -53,7 +53,7 @@ void    Warlock::forgetSpell(std::string name) {
         }
 }
 
-void    Warlock::launchSpell(std::string name, const ATarget &target) {
+void    Warlock::launchSpell(const std::string &name, const ATarget &target) {
     for (size_t i = 0; i < this->spells.size(); i++)
         if (this->spells[i]->getName() == name)
             return this->spells[i]->launch(target);

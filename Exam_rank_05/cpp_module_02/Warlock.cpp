@@ -6,7 +6,7 @@
 /*   By: adbenoit <adbenoit@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/10/14 17:38:10 by adbenoit          #+#    #+#             */
-/*   Updated: 2021/10/14 23:47:09 by adbenoit         ###   ########.fr       */
+/*   Updated: 2021/10/15 14:06:16 by adbenoit         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,38 +40,10 @@ void    Warlock::learnSpell(ASpell *spell){
     this->book.learnSpell(spell);
 }
 
-void    Warlock::forgetSpell(std::string name) {
+void    Warlock::forgetSpell(const std::string &name) {
     this->book.forgetSpell(name);
 }
 
-void    Warlock::launchSpell(std::string name, const ATarget &target) {
+void    Warlock::launchSpell(const std::string &name, const ATarget &target) {
     return this->book.createSpell(name)->launch(target);
-}
-
-#include "Polymorph.hpp"
-#include "BrickWall.hpp"
-#include "TargetGenerator.hpp"
-#include "Fireball.hpp"
-
-int main()
-{
-  Warlock richard("Richard", "foo");
-  richard.setTitle("Hello, I'm Richard the Warlock!");
-  BrickWall model1;
-
-  Polymorph* polymorph = new Polymorph();
-  TargetGenerator tarGen;
-
-  tarGen.learnTargetType(&model1);
-  richard.learnSpell(polymorph);
-
-  Fireball* fireball = new Fireball();
-
-  richard.learnSpell(fireball);
-
-  ATarget* wall = tarGen.createTarget("Inconspicuous Red-brick Wall");
-
-  richard.introduce();
-  richard.launchSpell("Polymorph", *wall);
-  richard.launchSpell("Fireball", *wall);
 }

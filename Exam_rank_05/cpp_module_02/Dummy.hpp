@@ -6,7 +6,7 @@
 /*   By: adbenoit <adbenoit@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/10/14 21:37:49 by adbenoit          #+#    #+#             */
-/*   Updated: 2021/10/14 22:54:02 by adbenoit         ###   ########.fr       */
+/*   Updated: 2021/10/15 13:48:27 by adbenoit         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,7 +19,7 @@ class Dummy : public ATarget
 {
 	public:
 		Dummy();
-		~Dummy();
+		virtual ~Dummy();
 		
 		virtual Dummy*	clone() const;
 };

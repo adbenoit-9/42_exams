@@ -6,7 +6,7 @@
 /*   By: adbenoit <adbenoit@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/10/14 21:37:49 by adbenoit          #+#    #+#             */
-/*   Updated: 2021/10/14 22:18:35 by adbenoit         ###   ########.fr       */
+/*   Updated: 2021/10/15 13:47:47 by adbenoit         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,7 +19,7 @@ class ASpell;
 
 class ATarget
 {
-	private:
+	protected:
 		std::string type;
 
 	public:
