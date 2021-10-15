@@ -6,7 +6,7 @@
 /*   By: adbenoit <adbenoit@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/10/14 17:38:10 by adbenoit          #+#    #+#             */
-/*   Updated: 2021/10/14 17:59:38 by adbenoit         ###   ########.fr       */
+/*   Updated: 2021/10/15 14:07:25 by adbenoit         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,11 +27,11 @@ const std::string&  Warlock::getName() const {
 const std::string&  Warlock::getTitle() const {
     return this->title;
 }
-void                Warlock::setTitle(const std::string &t) {
+void    Warlock::setTitle(const std::string &t) {
     this->title = t;
 }
 
-void                Warlock::introduce() const {
+void    Warlock::introduce() const {
     std::cout << this->name << ": I am " << this->name << ", "
             << this->title << "!" << std::endl;
 }
