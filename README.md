@@ -1,6 +1,6 @@
 # EXAMS (@42Paris)
 
-## Exam Rank 03
+## ✅ Exam Rank 03
 
 ### Subject
 
@@ -8,7 +8,7 @@ Write a program that will read an "operation file" and print the result in the t
 
 *(see more in Exam_rank_03/\*/subject.en.txt)*
 
-## Exam Rank 04
+## ✅ Exam Rank 04
 
 ### Subject
 
@@ -23,3 +23,9 @@ Write a program that will behave like executing a shell command.
 Create some classes like the piscine CPP.
 
 *(see more in Exam_rank_05/\*/subject.en.txt)*
+
+#### Tester
+```
+$ cd Exam_rank_05/[cpp_module]
+$ ./tester.sh
+```
