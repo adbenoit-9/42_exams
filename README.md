@@ -1,4 +1,5 @@
 # EXAMS (@42Paris)
+*42 exams of the new cursus*
 
 ## ✅ Exam Rank 03
 
