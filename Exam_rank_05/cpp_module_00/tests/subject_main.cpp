@@ -1,37 +1,29 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   ATarget.hpp                                        :+:      :+:    :+:   */
+/*   subject_main.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: adbenoit <adbenoit@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2021/10/14 21:37:49 by adbenoit          #+#    #+#             */
-/*   Updated: 2021/10/16 19:02:44 by adbenoit         ###   ########.fr       */
+/*   Created: 2021/10/16 18:13:58 by adbenoit          #+#    #+#             */
+/*   Updated: 2021/10/16 19:59:44 by adbenoit         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef ATARGET_HPP
-# define ATARGET_HPP
+#include "../Warlock.hpp"
 
-# include "ASpell.hpp"
-
-class ASpell;
-
-class ATarget
+int main(void)
 {
-	protected:
-		std::string type;
+  Warlock const richard("Richard", "Mistress of Magma");
+  richard.introduce();
+  std::cout << richard.getName() << " - " << richard.getTitle() << std::endl;
 
-	public:
-		ATarget();
-		ATarget(const std::string &);
-		ATarget(const ATarget &);
-		virtual ~ATarget();
-		ATarget&	operator=(const ATarget &);
-		
-		const std::string&	getType() const;
-		virtual ATarget*	clone() const = 0;
-		void				getHitBySpell(const ASpell &) const;
-};
+  Warlock* jack = new Warlock("Jack", "the Long");
+  jack->introduce();
+  jack->setTitle("the Mighty");
+  jack->introduce();
 
-#endif
+  delete jack;
+
+  return 0;
+}

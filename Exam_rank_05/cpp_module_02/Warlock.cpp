@@ -6,7 +6,7 @@
 /*   By: adbenoit <adbenoit@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/10/14 17:38:10 by adbenoit          #+#    #+#             */
-/*   Updated: 2021/10/15 14:06:16 by adbenoit         ###   ########.fr       */
+/*   Updated: 2021/10/16 18:42:41 by adbenoit         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,5 +45,8 @@ void    Warlock::forgetSpell(const std::string &name) {
 }
 
 void    Warlock::launchSpell(const std::string &name, const ATarget &target) {
-    return this->book.createSpell(name)->launch(target);
+    ASpell *spell;
+    spell = this->book.createSpell(name);
+    if (spell)
+        spell->launch(target);
 }
