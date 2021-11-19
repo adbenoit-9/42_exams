@@ -15,7 +15,7 @@ Write a program that will read an "operation file" and print the result in the t
 
 Write a program that will behave like executing a shell command.
 
-*(see more in Exam_rank_04/subject/)*
+*(see more in Exam_rank_04/subject/subject.en.txt)*
 
 ## ✅ Exam Rank 05
 
@@ -30,3 +30,8 @@ Create some classes like the piscine CPP.
 $ cd Exam_rank_05/[cpp_module]
 $ ./tester.sh
 ```
+##   Exam Rank 06
+
+Write a program that will listen for client to connect on a certain port on 127.0.0.1 and will let clients to speak with each other.
+
+*(see more in Exam_rank_06/subject.en.txt)*
