@@ -87,7 +87,7 @@ int main() {
 	connfd = accept(sockfd, (struct sockaddr *)&cli, &len);
 	if (connfd < 0) { 
         printf("server acccept failed...\n"); 
-        exit(0); 
+        exit(0);
     } 
     else
         printf("server acccept the client...\n");
