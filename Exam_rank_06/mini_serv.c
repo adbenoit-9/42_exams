@@ -6,7 +6,7 @@
 /*   By: adbenoit <adbenoit@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/11/22 16:58:24 by adbenoit          #+#    #+#             */
-/*   Updated: 2021/11/25 18:17:05 by adbenoit         ###   ########.fr       */
+/*   Updated: 2021/11/25 18:25:10 by adbenoit         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -82,11 +82,10 @@ void	handle_socket(int sockfd, struct sockaddr_in servaddr)
 			** 3 - process the action (request or response).
 			** 4 - if the client try to send a message, send it to all clients connected.
 
-			** How to reconize the action of a client ?
+			** How to reconize the action of a client with select ?
 			** How to know when a client diconnects ?
 			** How to reconize a client ? connfd ?
-			** answers in struct sockaddr nof the client ?
-			** NB: create an array of clients with the connfd and the struct sockaddr.
+			** NB: create an array/list of clients with the connfd and the struct sockaddr.
 			*/ 
 			
 			sprintf(str, "server: client %d just arrived\n", client_id);
@@ -112,7 +111,7 @@ int main (int ac, char **av)
 	bzero(&servaddr, sizeof(servaddr));
 	
 	servaddr.sin_family = AF_INET; 
-	servaddr.sin_addr.s_addr = htonl(2130706433); //127.0.0.1 forbidden function ?
+	servaddr.sin_addr.s_addr = htonl(2130706433); //127.0.0.1 forbidden function ? => AF_INET
 	servaddr.sin_port = htons(port); 
 
 	if ((bind(sockfd, (const struct sockaddr *)&servaddr, sizeof(servaddr))) != 0)
