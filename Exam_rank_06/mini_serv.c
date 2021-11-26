@@ -6,7 +6,7 @@
 /*   By: adbenoit <adbenoit@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/11/22 16:58:24 by adbenoit          #+#    #+#             */
-/*   Updated: 2021/11/25 18:25:10 by adbenoit         ###   ########.fr       */
+/*   Updated: 2021/11/26 15:18:39 by adbenoit         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,8 +18,25 @@
 #include <stdlib.h>
 #include <sys/select.h>
 
-void    exitError(char *str)
+typedef struct	s_client
 {
+	int					id;
+	int					connfd;
+	struct sockaddr_in	addr;
+	struct s_client		next;
+}				t_client;
+
+void    exitError(char *str, t_client *client_list)
+{
+	t_client	tmp = client_list;
+	
+	while (client_list)
+	{
+		tmp = tmp->next;
+		free(client_list);
+		client_list = tmp;
+	}
+	
 	write(STDERR_FILENO, str, strlen(str));
 	write(STDERR_FILENO, "\n", 1);
 	exit(1);
@@ -52,15 +69,47 @@ int extract_message(char **buf, char **msg)
 	return (0);
 }
 
+t_client	*ft_addnewclient(t_client *client_list, struct sockaddr_in addr, int fd)
+{
+	t_client	tmp;
+	
+	if (!client_list)
+	{
+		client_list = (t_client *)malloc(sizeof(t_client *));
+		if (!client_list)
+			exitError("Fatal Error", NULL);
+		client_list->id = 0;	
+		client_list->addr = addr;
+		client_list->connfd = fd;
+		client_list->next = NULL;
+		
+		return client_list;
+	}
+	
+	tmp = client_list;
+	while (tmp->next)
+		tmp = tmp->next;
+	tmp->next = (t_client *)malloc(sizeof(t_client *));
+	if (!tmp->next)
+			exitError("Fatal Error", client_list);
+	tmp->next->id = tmp->id + 1;	
+	tmp->next->addr = addr;
+	tmp->next->connfd = fd;
+	tmp->next->next = NULL;
+	
+	return client_list;
+}
+
 void	handle_socket(int sockfd, struct sockaddr_in servaddr)
 {
 	int					connfd, retval, client_id;
+	struct sockaddr_in	addr_tmp;
 	fd_set				rfd, wfd;
 	socklen_t			len;
-	struct sockaddr_in	cli[4096];
+	t_client			*client_list;
 	char				str[80];
-	
-	client_id = 0;
+
+	clients = NULL;
 	while (true)
 	{
 		/* waits for a connection */
@@ -68,25 +117,26 @@ void	handle_socket(int sockfd, struct sockaddr_in servaddr)
 		
 		/* error case */
 		if (retval == -1)
-			exitError("Fatal Error");
-		/* connexion found */
+			exitError("Fatal Error", NULL);
+		/* connexion founds */
 		else if (retval > 0)
 		{
 			len = sizeof(struct sockaddr_in);
-			connfd = accept(sockfd, (struct sockaddr *)&cli[client_id], &len);
+			connfd = accept(sockfd, (struct sockaddr *)&addr_tmp, &len);
 			if (connfd < 0)
-				exitError("Fatal Error");
+				exitError("Fatal Error", client_list);
+
+			client_list = ft_addnewclient(client_list, addr_tmp, connfd);
+			
 			/*
-			** 1 - check if the client is already connected.
+			** 1 - check if the client is already connected. not util ?
 			** 2 - check if he is trying to read or send a message.
 			** 3 - process the action (request or response).
 			** 4 - if the client try to send a message, send it to all clients connected.
 
 			** How to reconize the action of a client with select ?
-			** How to know when a client diconnects ?
-			** How to reconize a client ? connfd ?
-			** NB: create an array/list of clients with the connfd and the struct sockaddr.
-			*/ 
+			** How to know when a client diconnects ? at the end of the request or when i close the fd ?
+			*/
 			
 			sprintf(str, "server: client %d just arrived\n", client_id);
 			write(STDERR_FILENO, str, strlen(str));
@@ -104,7 +154,7 @@ int main (int ac, char **av)
 	struct sockaddr_in	servaddr;
 
 	if (ac < 2)
-		exitError("Wrong number of arguments");
+		exitError("Wrong number of arguments", NULL);
 	port = atoi(av[1]);
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	if (sockfd == -1)
@@ -115,10 +165,10 @@ int main (int ac, char **av)
 	servaddr.sin_port = htons(port); 
 
 	if ((bind(sockfd, (const struct sockaddr *)&servaddr, sizeof(servaddr))) != 0)
-		exitError("Fatal Error");
+		exitError("Fatal Error", NULL);
 
 	if (listen(sockfd, SOMAXCONN) != 0)
-		exitError("Fatal Error");
+		exitError("Fatal Error", NULL);
 	
 	handle_socket(sockfd, servaddr);
 	
