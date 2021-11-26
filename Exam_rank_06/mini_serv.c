@@ -100,20 +100,86 @@ t_client	*ft_addnewclient(t_client *client_list, struct sockaddr_in addr, int fd
 	return client_list;
 }
 
+int		ft_clientsize(t_client *client_list)
+{
+	t_client *tmp = client_list;
+	int size = 0;
+
+	while (tmp)
+	{
+		++size;
+		tmp = tmp->next;
+	}
+
+	return size;
+}
+
+int		get_maxfd(int socketfd, t_client *client_list)
+{
+	int maxfd = socketfd;
+	t_client tmp = client_list;
+
+	while(tmp)
+	{
+		if (tmp->connfd > maxfd)
+			maxfd = tmp->connfd;
+		tmp = tmp->next;
+	}
+
+	return maxfd;
+}
+
+void	receiveMessage(int socketfd, t_client *client_list, int client_id, fd_set rfds)
+{
+	char message[4097];
+	char str[4096];
+	char *newMessage;
+	int ret;
+
+	if (!FD_ISSET(socketfd, rfds))
+		return ;
+	ret = recv(socketfd, message, 4096, 0);
+	message[ret] = 0;
+	sprintf(str, "client %d: ", client_id);
+	newMessage = str_join(str, message);
+	sendMessage(newMessage, client_list);
+	free(newMessage);
+}
+
+void	sendMessage(char *message, t_client *client_list, set_fd wfds)
+{
+	t_client *tmp = client_list;
+	while (tmp)
+	{
+		// vraiemnt pas sure
+		if (FD_ISSET(tmp->connfd, wfds))
+			// send ?
+			// write(STDIN_FILENO, message, strlen(message));
+		else
+			// client disconnect ? delete it end send to
+		tmp = tmp->next;
+	}
+}
+
 void	handle_socket(int sockfd, struct sockaddr_in servaddr)
 {
-	int					connfd, retval, client_id;
+	int					connfd, retval, client_id, maxfd;
 	struct sockaddr_in	addr_tmp;
-	fd_set				rfd, wfd;
+	fd_set				rfd, wfd, allfd;
 	socklen_t			len;
 	t_client			*client_list;
-	char				str[80];
+	char				str[4096];
 
+	FD_SET(socketfd, &allfd);
 	clients = NULL;
+	maxfd = socketfd;
 	while (true)
 	{
+		rfd = allfd;
+		wfd = allfd;
+
 		/* waits for a connection */
-		retval = select(2, &rfd, &wfd, NULL, NULL);
+		retval = select(maxfd, &rfd, &wfd, NULL, NULL);
 		
 		/* error case */
 		if (retval == -1)
@@ -125,25 +191,24 @@ void	handle_socket(int sockfd, struct sockaddr_in servaddr)
 			connfd = accept(sockfd, (struct sockaddr *)&addr_tmp, &len);
 			if (connfd < 0)
 				exitError("Fatal Error", client_list);
+			if (!FD_ISSET(connfd, allfd))
+			{
+				client_list = ft_addnewclient(client_list, addr_tmp, connfd);
+				sprintf(str, "server: client %d just arrived\n", client_id);
+				sendMessage(str, client_list, wfd);
+				FD_SET(connfd, &allfd);
+				maxfd = get_maxfd(socketfd, client_list);
+			}
 
-			client_list = ft_addnewclient(client_list, addr_tmp, connfd);
-			
+			receiveMessage(socketfd, client_list, ft_clientsize() - 1, rfd);
 			/*
-			** 1 - check if the client is already connected. not util ?
-			** 2 - check if he is trying to read or send a message.
+			** 1 - check if the client is already connected => fd_isset allfd
+			** 2 - check if he is trying to read or send a message => fd_isset rfd/wfd
 			** 3 - process the action (request or response).
 			** 4 - if the client try to send a message, send it to all clients connected.
 
-			** How to reconize the action of a client with select ?
 			** How to know when a client diconnects ? at the end of the request or when i close the fd ?
 			*/
-			
-			sprintf(str, "server: client %d just arrived\n", client_id);
-			write(STDERR_FILENO, str, strlen(str));
-			++client_id;
-			
-			// FD_SET(connfd, &rfd); // fd that you will receive will already be set ?
-			// FD_SET(connfd, &wfd); // fd that you will receive will already be set ?
 		}
 	}
 }
