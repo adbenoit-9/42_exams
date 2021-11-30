@@ -6,7 +6,7 @@
 /*   By: adbenoit <adbenoit@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/11/22 16:58:24 by adbenoit          #+#    #+#             */
-/*   Updated: 2021/11/26 15:18:39 by adbenoit         ###   ########.fr       */
+/*   Updated: 2021/11/30 14:05:15 by adbenoit         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,12 +23,12 @@ typedef struct	s_client
 	int					id;
 	int					connfd;
 	struct sockaddr_in	addr;
-	struct s_client		next;
+	struct s_client		*next;
 }				t_client;
 
 void    exitError(char *str, t_client *client_list)
 {
-	t_client	tmp = client_list;
+	t_client	*tmp = client_list;
 	
 	while (client_list)
 	{
@@ -40,6 +40,26 @@ void    exitError(char *str, t_client *client_list)
 	write(STDERR_FILENO, str, strlen(str));
 	write(STDERR_FILENO, "\n", 1);
 	exit(1);
+}
+
+char *str_join(char *buf, char *add)
+{
+	char	*newbuf;
+	int		len;
+
+	if (buf == 0)
+		len = 0;
+	else
+		len = strlen(buf);
+	newbuf = malloc(sizeof(*newbuf) * (len + strlen(add) + 1));
+	if (newbuf == 0)
+		return (0);
+	newbuf[0] = 0;
+	if (buf != 0)
+		strcat(newbuf, buf);
+	free(buf);
+	strcat(newbuf, add);
+	return (newbuf);
 }
 
 int extract_message(char **buf, char **msg)
@@ -71,7 +91,7 @@ int extract_message(char **buf, char **msg)
 
 t_client	*ft_addnewclient(t_client *client_list, struct sockaddr_in addr, int fd)
 {
-	t_client	tmp;
+	t_client	*tmp;
 	
 	if (!client_list)
 	{
@@ -102,24 +122,23 @@ t_client	*ft_addnewclient(t_client *client_list, struct sockaddr_in addr, int fd
 
 int		ft_clientsize(t_client *client_list)
 {
-	t_client *tmp = client_list;
 	int size = 0;
 
-	while (tmp)
+	while (client_list)
 	{
 		++size;
-		tmp = tmp->next;
+		client_list = client_list->next;
 	}
 
 	return size;
 }
 
-int		get_maxfd(int socketfd, t_client *client_list)
+int		get_maxfd(int sockfd, t_client *client_list)
 {
-	int maxfd = socketfd;
-	t_client tmp = client_list;
+	int maxfd = sockfd;
+	t_client *tmp = client_list;
 
-	while(tmp)
+	while (tmp)
 	{
 		if (tmp->connfd > maxfd)
 			maxfd = tmp->connfd;
@@ -129,51 +148,76 @@ int		get_maxfd(int socketfd, t_client *client_list)
 	return maxfd;
 }
 
-void	receiveMessage(int socketfd, t_client *client_list, int client_id, fd_set rfds)
+int	sendMessage(char *message, t_client *client_list)
+{
+	t_client *tmp = client_list;
+	int	ret;
+	while (tmp)
+	{
+		// vraiemnt pas sure
+		ret = send(tmp->connfd, message, strlen(message), 0);
+		if (ret == -1)
+		{
+			// client disconnect ? delete it end send to
+			return (0);
+		}
+		tmp = tmp->next;
+	}
+	return (1);
+}
+
+int	receiveMessage(int sockfd, t_client *client_list, int client_id,
+			struct fd_set *rfds, struct fd_set *wfds)
 {
 	char message[4097];
 	char str[4096];
 	char *newMessage;
 	int ret;
 
-	if (!FD_ISSET(socketfd, rfds))
-		return ;
-	ret = recv(socketfd, message, 4096, 0);
-	message[ret] = 0;
-	sprintf(str, "client %d: ", client_id);
-	newMessage = str_join(str, message);
-	sendMessage(newMessage, client_list);
-	free(newMessage);
-}
-
-void	sendMessage(char *message, t_client *client_list, set_fd wfds)
-{
-	t_client *tmp = client_list;
-	while (tmp)
+	/* Server receive Message and resent it to all clients */
+	if (FD_ISSET(sockfd, rfds))
 	{
-		// vraiemnt pas sure
-		if (FD_ISSET(tmp->connfd, wfds))
-			// send ?
-			// write(STDIN_FILENO, message, strlen(message));
-		else
-			// client disconnect ? delete it end send to
-		tmp = tmp->next;
+		ret = recv(sockfd, message, 4096, 0);
+		message[ret] = 0;
+		write(STDIN_FILENO, message, strlen(message));
+		sprintf(str, "client %d: ", client_id);
+		newMessage = str_join(str, message);
+		if (!newMessage)
+			return (0);
+		// if (FD_ISSET(sockfd, &wfds))
+		sendMessage(newMessage, client_list);
+		free(newMessage);
 	}
+	/* client receive message */
+	else
+	{
+		while (client_list)
+		{
+			if (FD_ISSET(client_list->connfd, rfds))
+			{
+				ret = recv(client_list->connfd, message, 4096, 0);
+				message[ret] = 0;
+				// write(STDIN_FILENO, message, strlen(message));
+			}
+			client_list = client_list->next;
+		}
+	}
+	return (1);
 }
 
 void	handle_socket(int sockfd, struct sockaddr_in servaddr)
 {
 	int					connfd, retval, client_id, maxfd;
 	struct sockaddr_in	addr_tmp;
-	fd_set				rfd, wfd, allfd;
+	struct fd_set		rfd, wfd, allfd;
 	socklen_t			len;
 	t_client			*client_list;
 	char				str[4096];
 
-	FD_SET(socketfd, &allfd);
-	clients = NULL;
-	maxfd = socketfd;
-	while (true)
+	FD_SET(sockfd, &allfd);
+	client_list = NULL;
+	maxfd = sockfd;
+	while (1)
 	{
 		rfd = allfd;
 		wfd = allfd;
@@ -191,16 +235,16 @@ void	handle_socket(int sockfd, struct sockaddr_in servaddr)
 			connfd = accept(sockfd, (struct sockaddr *)&addr_tmp, &len);
 			if (connfd < 0)
 				exitError("Fatal Error", client_list);
-			if (!FD_ISSET(connfd, allfd))
+			if (!FD_ISSET(connfd, &allfd))
 			{
 				client_list = ft_addnewclient(client_list, addr_tmp, connfd);
 				sprintf(str, "server: client %d just arrived\n", client_id);
-				sendMessage(str, client_list, wfd);
+				sendMessage(str, client_list);
 				FD_SET(connfd, &allfd);
-				maxfd = get_maxfd(socketfd, client_list);
+				maxfd = get_maxfd(sockfd, client_list);
 			}
 
-			receiveMessage(socketfd, client_list, ft_clientsize() - 1, rfd);
+			receiveMessage(sockfd, client_list, ft_clientsize(client_list) - 1, &rfd, &wfd);
 			/*
 			** 1 - check if the client is already connected => fd_isset allfd
 			** 2 - check if he is trying to read or send a message => fd_isset rfd/wfd
