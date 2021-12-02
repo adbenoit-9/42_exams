@@ -6,7 +6,7 @@
 /*   By: adbenoit <adbenoit@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/11/22 16:58:24 by adbenoit          #+#    #+#             */
-/*   Updated: 2021/12/01 18:17:06 by adbenoit         ###   ########.fr       */
+/*   Updated: 2021/12/02 13:02:13 by adbenoit         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,10 @@
 #include <netinet/in.h>
 #include <stdlib.h>
 #include <sys/select.h>
+
+#define ALL 0
+#define READ 1
+#define WRITE 2
 
 typedef struct	s_client
 {
@@ -43,7 +47,8 @@ void    exitError(char *str, t_client *client)
 	exit(1);
 }
 
-int get_message_end(char *msg)
+/* Get the position of the the last character of the message */
+int message_ending(char *msg)
 {
 	int	i;
 
@@ -57,19 +62,6 @@ int get_message_end(char *msg)
 		i++;
 	}
 	return (0);
-}
-
-int		ft_clientsize(t_client *client)
-{
-	int size = 0;
-
-	while (client)
-	{
-		client = client->next;
-		++size;
-	}
-
-	return (size);
 }
 
 int		get_maxfd(int sockfd, t_client *client)
@@ -87,89 +79,83 @@ int		get_maxfd(int sockfd, t_client *client)
 	return (maxfd);
 }
 
-int	send_message(char *message, t_client *client, t_client *sender, struct fd_set *wfds)
+/* Send the message to all clients */
+void	send_message(char *msg, t_client *client_lst, t_client *sender, struct fd_set **fds)
 {
-	int	ret;
-	
-	while (client)
+	while (client_lst)
 	{
-		if (client != sender && FD_ISSET(client->fd, wfds))
-		{
-			ret = send(client->fd, message, strlen(message), 0);
-			if (ret == -1)
-				return (0);
-		}
-		client = client->next;
+		if (client_lst != sender && FD_ISSET(client_lst->fd, fds[WRITE]))
+			send(client_lst->fd, msg, strlen(msg), 0);
+		client_lst = client_lst->next;
 	}
-	return (1);
 }
 
-t_client	*add_newclient(t_client *client, int fd, struct fd_set *allfds, struct fd_set *wfds)
+/* Adds a client to the list and informs the others of his arrival. */
+t_client	*add_newclient(t_client *client_lst, int fd, struct fd_set **fds)
 {
 	t_client	*it;
 	char		str[4096];
 	
-	FD_SET(fd, allfds);
-	if (!client)
+	FD_SET(fd, fds[ALL]);
+	if (!client_lst)
 	{
-		client = (t_client *)malloc(sizeof(t_client));
-		if (!client)
+		client_lst = (t_client *)malloc(sizeof(t_client));
+		if (!client_lst)
 		{
 			close(fd);
 			exitError("Fatal Error", NULL);
 		}
-		client->id = 0;	
-		client->fd = fd;
-		client->next = NULL;
-		return (client);
+		client_lst->id = 0;	
+		client_lst->fd = fd;
+		client_lst->next = NULL;
+		return (client_lst);
 	}
 
 	/* get the last client */
-	it = client;
+	it = client_lst;
 	while (it->next)
 		it = it->next;
 
-	/* add the new client at the back of the list */
+	/* adds the new client at the back of the list */
 	it->next = (t_client *)malloc(sizeof(t_client));
 	if (!it->next)
-		exitError("Fatal Error", client);
+		exitError("Fatal Error", client_lst);
 	it->next->id = it->id + 1;	
 	it->next->fd = fd;
 	it->next->next = NULL;
 
 	sprintf(str, "server: client %d just arrived\n", it->next->id);
-	send_message(str, client, it->next, wfds);
+	send_message(str, client_lst, it->next, fds);
 
-	return (client);
+	return (client_lst);
 }
 
-t_client	*delete_client(t_client *client, t_client *del, struct fd_set *fds,
-				struct fd_set *wfds)
+/* Removes a client from the list, disconnect him and informs the others. */
+t_client	*remove_client(t_client *client_lst, t_client *del, struct fd_set **fds)
 {
 	char		str[4096];
 	t_client	*it;
 	
-	it = client;
+	it = client_lst;
 	while (it && it->next != del)
 		it = it->next;
 		
 	sprintf(str, "server: client %d just left\n", del->id);
-	send_message(str, client, del, wfds);
+	send_message(str, client_lst, del, fds);
 	
-	FD_CLR(del->fd, fds);
+	FD_CLR(del->fd, fds[ALL]);
 	close(del->fd);
-	if (client != del)
+	if (client_lst != del)
 		it->next = del->next;
 	else
-		client = client->next;
+		client_lst = client_lst->next;
 	free(del);
 
-	return (client);
+	return (client_lst);
 }
 
-/* check if the server receive a message and resent it to all clients */
-t_client	*receive_message(t_client *client, struct fd_set *rfds,
-				struct fd_set *wfds, struct fd_set *allfds)
+/* Check if the server receive a message and resend it to all clients. */
+t_client	*receive_message(t_client *client, struct fd_set **fds)
 {
 	char		buffer[4097]; // a single message will never be longer than 4096 characters
 	char		str[5000];
@@ -180,21 +166,21 @@ t_client	*receive_message(t_client *client, struct fd_set *rfds,
 	while (it)
 	{
 		/* message receives from it */
-		if (FD_ISSET(it->fd, rfds))
+		if (FD_ISSET(it->fd, fds[READ]))
 		{
 			ret = recv(it->fd, buffer, 4096, 0);
 			tmp = it;
 			it = it->next;
 			/* client disconnects */
 			if (ret == 0)
-				client = delete_client(client, tmp, allfds, wfds);
+				client = remove_client(client, tmp, fds);
 			/* send messsage */
 			else
 			{
 				buffer[ret] = 0;
-				buffer[get_message_end(buffer) + 1] = 0;
+				buffer[message_ending(buffer) + 1] = 0;
 				sprintf(str, "client %d: %s", it->id, buffer);
-				send_message(str, client, it, wfds);
+				send_message(str, client, it, fds);
 			}
 		}
 		else
@@ -204,43 +190,42 @@ t_client	*receive_message(t_client *client, struct fd_set *rfds,
 	return (client);
 }
 
+/* Waits for a connection on the server and processes it. */
 void	handle_connection(int sockfd)
 {
-	int					connfd, retval, maxfd;
+	int					connfd, ret, maxfd;
 	struct sockaddr_in	addr_tmp;
-	struct fd_set		rfds, wfds, allfds;
+	struct fd_set		*fds[3];
 	socklen_t			len;
 	t_client			*client;
 
-	FD_ZERO(&allfds);
-	FD_SET(sockfd, &allfds);
+	FD_ZERO(fds[ALL]);
+	FD_SET(sockfd, fds[ALL]);
 	client = NULL;
 	maxfd = sockfd;
 	
 	while (1)
 	{
-		rfds = allfds;
-		wfds = allfds;
+		*fds[READ] = *fds[ALL];
+		*fds[WRITE] = *fds[ALL];
 
 		/* waits for a connection */
-		retval = select(maxfd + 1, &rfds, &wfds, NULL, NULL);
+		ret = select(maxfd + 1, fds[READ], fds[WRITE], NULL, NULL);
 		/* error case */
-		if (retval == -1)
+		if (ret == -1)
 			exitError("Fatal Error", NULL);
 		/* connection founds */
-		else if (retval > 0)
+		else if (ret > 0)
 		{
 			len = sizeof(struct sockaddr_in);
 			connfd = accept(sockfd, (struct sockaddr *)&addr_tmp, &len);
-			if (connfd < 0)
-				exitError("Fatal Error", client);
-			if (!FD_ISSET(connfd, &allfds))
+			if (!FD_ISSET(connfd, fds[ALL]))
 			{
-				client = add_newclient(client, connfd, &allfds, &wfds);
+				client = add_newclient(client, connfd, fds);
 				maxfd = get_maxfd(sockfd, client);
 			}
 			
-			client = receive_message(client, &rfds, &wfds, &allfds);
+			client = receive_message(client, fds);
 		}
 	}
 }
@@ -257,6 +242,7 @@ int main (int ac, char **av)
 	/* Setup server */
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	if (sockfd == -1)
+		exitError("Fatal Error", NULL);
 	bzero(&servaddr, sizeof(servaddr));
 	
 	servaddr.sin_family = AF_INET; 
