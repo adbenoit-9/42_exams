@@ -6,7 +6,7 @@
 /*   By: adbenoit <adbenoit@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/12/02 13:50:09 by adbenoit          #+#    #+#             */
-/*   Updated: 2021/12/02 13:59:10 by adbenoit         ###   ########.fr       */
+/*   Updated: 2021/12/02 15:26:30 by adbenoit         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,12 +17,15 @@
 #include <netinet/in.h>
 #include <stdlib.h>
 #include <sys/select.h>
+#include <fcntl.h>
+
+#define BUFFER_SIZE 65535
 
 typedef struct s_client
 {
 	int					id;
 	int					fd;
-	struct sockaddr_in	addr;
+	char				*buffer;
 	struct s_client		*next;
 }				t_client;
 
@@ -42,6 +45,7 @@ void	exit_error(char *str, t_client *client)
 	{
 		it = it->next;
 		close(client->fd);
+		free(client->buffer);
 		free(client);
 		client = it;
 	}
@@ -50,21 +54,51 @@ void	exit_error(char *str, t_client *client)
 	exit(1);
 }
 
-/* Get the position of the the last character of the message */
-int	message_ending(char *msg)
+int extract_message(char **buf, char **msg)
 {
+	char	*newbuf;
 	int	i;
 
-	if (msg == 0)
+	*msg = 0;
+	if (*buf == 0)
 		return (0);
 	i = 0;
-	while (msg[i])
+	while ((*buf)[i])
 	{
-		if (msg[i] == '\n')
-			return (i);
+		if ((*buf)[i] == '\n')
+		{
+			newbuf = calloc(1, sizeof(*newbuf) * (strlen(*buf + i + 1) + 1));
+			if (newbuf == 0)
+				return (-1);
+			strcpy(newbuf, *buf + i + 1);
+			*msg = *buf;
+			(*msg)[i + 1] = 0;
+			*buf = newbuf;
+			return (1);
+		}
 		i++;
 	}
 	return (0);
+}
+
+char *str_join(char *buf, char *add)
+{
+	char	*newbuf;
+	int		len;
+
+	if (buf == 0)
+		len = 0;
+	else
+		len = strlen(buf);
+	newbuf = malloc(sizeof(*newbuf) * (len + strlen(add) + 1));
+	if (newbuf == 0)
+		return (0);
+	newbuf[0] = 0;
+	if (buf != 0)
+		strcat(newbuf, buf);
+	free(buf);
+	strcat(newbuf, add);
+	return (newbuf);
 }
 
 int	get_maxfd(int sockfd, t_client *client)
@@ -112,6 +146,7 @@ t_client	*add_newclient(t_client *client_lst, int fd, t_fds *fds)
 		}
 		client_lst->id = 0;
 		client_lst->fd = fd;
+		client_lst->buffer = NULL;
 		client_lst->next = NULL;
 		return (client_lst);
 	}
@@ -125,6 +160,7 @@ t_client	*add_newclient(t_client *client_lst, int fd, t_fds *fds)
 		exit_error("Fatal Error", client_lst);
 	it->next->id = it->id + 1;
 	it->next->fd = fd;
+	it->next->buffer = NULL;
 	it->next->next = NULL;
 	sprintf(str, "server: client %d just arrived\n", it->next->id);
 	send_message(str, client_lst, it->next, fds);
@@ -155,7 +191,8 @@ t_client	*remove_client(t_client *client_lst, t_client *del, t_fds *fds)
 /* Check if the server receive a message and resend it to all clients. */
 t_client	*receive_message(t_client *client, t_fds *fds)
 {
-	char		buffer[4097]; // a single message will never be longer than 4096 characters
+	char		buffer[BUFFER_SIZE];
+	char		*msg;
 	char		str[5000];
 	int			ret;
 	t_client	*it, *tmp;
@@ -166,19 +203,23 @@ t_client	*receive_message(t_client *client, t_fds *fds)
 		/* message receives from it */
 		if (FD_ISSET(it->fd, &fds->read))
 		{
-			ret = recv(it->fd, buffer, 4096, 0);
+			ret = recv(it->fd, buffer, BUFFER_SIZE - 1, 0);
 			tmp = it;
 			it = it->next;
 			/* client disconnects */
 			if (ret == 0)
 				client = remove_client(client, tmp, fds);
 			/* send messsage */
-			else
+			else if (ret != -1)
 			{
 				buffer[ret] = 0;
-				buffer[message_ending(buffer) + 1] = 0;
-				sprintf(str, "client %d: %s", it->id, buffer);
-				send_message(str, client, it, fds);
+				client->buffer = str_join(client->buffer, buffer);
+				while (extract_message(&client->buffer, &msg))
+				{
+					sprintf(str, "client %d: %s", it->id, msg);
+					send_message(str, client, it, fds);
+					free(msg);
+				}
 			}
 		}
 		else
@@ -210,12 +251,13 @@ void	handle_connection(int sockfd)
 		if (ret == -1)
 			exit_error("Fatal Error", NULL);
 		/* connection founds */
-		else if (ret > 0)
+		else if (ret > 0 && FD_ISSET(sockfd, &fds.read))
 		{
 			len = sizeof(struct sockaddr_in);
 			connfd = accept(sockfd, (struct sockaddr *)&addr_tmp, &len);
 			if (!FD_ISSET(connfd, &fds.all))
 			{
+				// fcntl(connfd, F_SETFL, O_NONBLOCK);
 				client = add_newclient(client, connfd, &fds);
 				maxfd = get_maxfd(sockfd, client);
 			}
