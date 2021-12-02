@@ -6,7 +6,7 @@
 /*   By: adbenoit <adbenoit@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/12/02 13:50:09 by adbenoit          #+#    #+#             */
-/*   Updated: 2021/12/02 15:26:30 by adbenoit         ###   ########.fr       */
+/*   Updated: 2021/12/02 19:03:37 by adbenoit         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -104,15 +104,13 @@ char *str_join(char *buf, char *add)
 int	get_maxfd(int sockfd, t_client *client)
 {
 	int			maxfd;
-	t_client	*tmp;
 
 	maxfd = sockfd;
-	tmp = client;
-	while (tmp)
+	while (client)
 	{
-		if (tmp->fd > maxfd)
-			maxfd = tmp->fd;
-		tmp = tmp->next;
+		if (client->fd > maxfd)
+			maxfd = client->fd;
+		client = client->next;
 	}
 	return (maxfd);
 }
@@ -121,6 +119,7 @@ int	get_maxfd(int sockfd, t_client *client)
 void	send_message(char *msg, t_client *client_lst, t_client *sender,
 			t_fds *fds)
 {
+	write(STDIN_FILENO, msg, strlen(msg));
 	while (client_lst)
 	{
 		if (client_lst != sender && FD_ISSET(client_lst->fd, &fds->write))
@@ -148,6 +147,7 @@ t_client	*add_newclient(t_client *client_lst, int fd, t_fds *fds)
 		client_lst->fd = fd;
 		client_lst->buffer = NULL;
 		client_lst->next = NULL;
+		send_message("server: client 0 just arrived\n", client_lst, client_lst, fds);
 		return (client_lst);
 	}
 	/* get the last client */
@@ -203,7 +203,7 @@ t_client	*receive_message(t_client *client, t_fds *fds)
 		/* message receives from it */
 		if (FD_ISSET(it->fd, &fds->read))
 		{
-			ret = recv(it->fd, buffer, BUFFER_SIZE - 1, 0);
+			ret = recv(it->fd, buffer, BUFFER_SIZE - 1, MSG_WAITALL);
 			tmp = it;
 			it = it->next;
 			/* client disconnects */
@@ -213,8 +213,8 @@ t_client	*receive_message(t_client *client, t_fds *fds)
 			else if (ret != -1)
 			{
 				buffer[ret] = 0;
-				client->buffer = str_join(client->buffer, buffer);
-				while (extract_message(&client->buffer, &msg))
+				it->buffer = str_join(it->buffer, buffer);
+				while (extract_message(&it->buffer, &msg))
 				{
 					sprintf(str, "client %d: %s", it->id, msg);
 					send_message(str, client, it, fds);
@@ -287,5 +287,6 @@ int	main(int ac, char **av)
 	if (listen(sockfd, SOMAXCONN) != 0)
 		exit_error("Fatal Error", NULL);
 	handle_connection(sockfd);
+	close(sockfd);
 	exit(0);
 }
