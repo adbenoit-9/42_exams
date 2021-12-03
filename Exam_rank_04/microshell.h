@@ -6,7 +6,7 @@
 /*   By: adbenoit <adbenoit@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/06/24 15:14:49 by adbenoit          #+#    #+#             */
-/*   Updated: 2021/07/07 17:08:26 by adbenoit         ###   ########.fr       */
+/*   Updated: 2021/12/03 17:49:16 by adbenoit         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,7 @@
 # include <sys/wait.h>
 # include <string.h>
 # include <stdlib.h>
+# include <stdio.h>
 # include <signal.h>
 
 

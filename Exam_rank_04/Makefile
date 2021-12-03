@@ -6,13 +6,13 @@
 #    By: adbenoit <adbenoit@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2021/05/03 11:21:34 by adbenoit          #+#    #+#              #
-#    Updated: 2021/12/03 17:32:18 by adbenoit         ###   ########.fr        #
+#    Updated: 2021/12/03 17:44:29 by adbenoit         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 NAME	=	microshell
 CC		=	gcc
-FLAG	=	-Wall -Wextra -Werror -g3 -fsanitize=address
+FLAG	=	-Wall -Wextra -Werror
 
 SRC		=	main.c microshell.c utils.c
 OBJ		=	$(SRC:.c=.o)

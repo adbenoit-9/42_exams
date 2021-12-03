@@ -6,7 +6,7 @@
 /*   By: adbenoit <adbenoit@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/06/29 13:49:50 by adbenoit          #+#    #+#             */
-/*   Updated: 2021/12/03 17:37:27 by adbenoit         ###   ########.fr       */
+/*   Updated: 2021/12/03 17:44:18 by adbenoit         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,8 +35,7 @@ int main(int ac, char **av, char *envp[])
 		else
 		   ++i;
 	}
-	if (av[start])
-		launch_cmd(av + start, envp);				//launch last command
+	launch_cmd(av + start, envp);				//launch last command
 	return (0);
 }
  
