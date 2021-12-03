@@ -6,7 +6,7 @@
 /*   By: adbenoit <adbenoit@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/12/02 13:50:09 by adbenoit          #+#    #+#             */
-/*   Updated: 2021/12/02 19:03:37 by adbenoit         ###   ########.fr       */
+/*   Updated: 2021/12/03 17:12:49 by adbenoit         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -101,20 +101,6 @@ char *str_join(char *buf, char *add)
 	return (newbuf);
 }
 
-int	get_maxfd(int sockfd, t_client *client)
-{
-	int			maxfd;
-
-	maxfd = sockfd;
-	while (client)
-	{
-		if (client->fd > maxfd)
-			maxfd = client->fd;
-		client = client->next;
-	}
-	return (maxfd);
-}
-
 /* Send the message to all clients */
 void	send_message(char *msg, t_client *client_lst, t_client *sender,
 			t_fds *fds)
@@ -129,7 +115,7 @@ void	send_message(char *msg, t_client *client_lst, t_client *sender,
 }
 
 /* Adds a client to the list and informs the others of his arrival. */
-t_client	*add_newclient(t_client *client_lst, int fd, t_fds *fds)
+t_client	*add_newclient(t_client *client_lst, int fd, int id, t_fds *fds)
 {
 	t_client	*it;
 	char		str[4096];
@@ -143,7 +129,7 @@ t_client	*add_newclient(t_client *client_lst, int fd, t_fds *fds)
 			close(fd);
 			exit_error("Fatal Error", NULL);
 		}
-		client_lst->id = 0;
+		client_lst->id = id;
 		client_lst->fd = fd;
 		client_lst->buffer = NULL;
 		client_lst->next = NULL;
@@ -158,7 +144,7 @@ t_client	*add_newclient(t_client *client_lst, int fd, t_fds *fds)
 	it->next = (t_client *)malloc(sizeof(t_client));
 	if (!it->next)
 		exit_error("Fatal Error", client_lst);
-	it->next->id = it->id + 1;
+	it->next->id = id;
 	it->next->fd = fd;
 	it->next->buffer = NULL;
 	it->next->next = NULL;
@@ -213,11 +199,11 @@ t_client	*receive_message(t_client *client, t_fds *fds)
 			else if (ret != -1)
 			{
 				buffer[ret] = 0;
-				it->buffer = str_join(it->buffer, buffer);
-				while (extract_message(&it->buffer, &msg))
+				tmp->buffer = str_join(tmp->buffer, buffer);
+				while (extract_message(&tmp->buffer, &msg))
 				{
-					sprintf(str, "client %d: %s", it->id, msg);
-					send_message(str, client, it, fds);
+					sprintf(str, "client %d: %s", tmp->id, msg);
+					send_message(str, client, tmp, fds);
 					free(msg);
 				}
 			}
@@ -231,8 +217,8 @@ t_client	*receive_message(t_client *client, t_fds *fds)
 /* Waits for a connection on the server and processes it. */
 void	handle_connection(int sockfd)
 {
-	int					connfd, ret, maxfd;
-	struct sockaddr_in	addr_tmp;
+	int					connfd, ret, maxfd, client_id;
+	struct sockaddr_in	addr;
 	t_fds				fds;
 	socklen_t			len;
 	t_client			*client;
@@ -241,6 +227,7 @@ void	handle_connection(int sockfd)
 	FD_SET(sockfd, &fds.all);
 	client = NULL;
 	maxfd = sockfd;
+	client_id = 0;
 	while (1)
 	{
 		fds.read = fds.all;
@@ -254,15 +241,17 @@ void	handle_connection(int sockfd)
 		else if (ret > 0 && FD_ISSET(sockfd, &fds.read))
 		{
 			len = sizeof(struct sockaddr_in);
-			connfd = accept(sockfd, (struct sockaddr *)&addr_tmp, &len);
-			if (!FD_ISSET(connfd, &fds.all))
+			connfd = accept(sockfd, (struct sockaddr *)&addr, &len);
+			// fcntl(connfd, F_SETFL, O_NONBLOCK);
+			if (connfd > 0)
 			{
-				// fcntl(connfd, F_SETFL, O_NONBLOCK);
-				client = add_newclient(client, connfd, &fds);
-				maxfd = get_maxfd(sockfd, client);
+				client = add_newclient(client, connfd, client_id, &fds);
+				maxfd = connfd > maxfd ? connfd : maxfd;
+				++client_id;
 			}
-			client = receive_message(client, &fds);
 		}
+		else if (client && ret > 0)
+			client = receive_message(client, &fds);
 	}
 }
 
@@ -280,7 +269,7 @@ int	main(int ac, char **av)
 		exit_error("Fatal Error", NULL);
 	bzero(&servaddr, sizeof(servaddr));
 	servaddr.sin_family = AF_INET;
-	servaddr.sin_addr.s_addr = htonl(2130706433);
+	servaddr.sin_addr.s_addr = htonl(2130706433); // 127.0.0.1
 	servaddr.sin_port = htons(port);
 	if (bind(sockfd, (const struct sockaddr *)&servaddr, sizeof(servaddr)))
 		exit_error("Fatal Error", NULL);
