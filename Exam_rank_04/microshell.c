@@ -6,7 +6,7 @@
 /*   By: adbenoit <adbenoit@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/06/29 15:09:39 by adbenoit          #+#    #+#             */
-/*   Updated: 2021/06/30 14:03:09 by adbenoit         ###   ########.fr       */
+/*   Updated: 2021/12/03 17:39:44 by adbenoit         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -71,6 +71,9 @@ void    launch_cmd(char **arg, char *envp[])
 	int count;
 	int fd_in;
 
+	if (!arg[0])
+		return ;
+	count = 0;
     if (!strcmp(arg[0], "cd"))
 			return (ft_cd(arg));
 	if ((fd_in = dup(STDIN_FILENO)) == -1)      // duplicate the fd of the stdin
