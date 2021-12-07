@@ -6,7 +6,7 @@
 /*   By: adbenoit <adbenoit@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/12/02 13:50:09 by adbenoit          #+#    #+#             */
-/*   Updated: 2021/12/07 14:35:54 by adbenoit         ###   ########.fr       */
+/*   Updated: 2021/12/07 16:33:26 by adbenoit         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,9 +31,9 @@ typedef struct s_client
 
 typedef struct s_fds
 {
-	struct fd_set	all;
-	struct fd_set	read;
-	struct fd_set	write;
+	struct fd_set	all;	// all descriptors (server and clients)
+	struct fd_set	rd;		// descriptors ready for reading
+	struct fd_set	wr;		// descriptors ready for writing
 	int				socket;
 }				t_fds;
 
@@ -116,7 +116,7 @@ void	send_message(char *msg, t_client *client_lst, t_client *sender,
 	write(STDIN_FILENO, msg, strlen(msg));
 	while (client_lst)
 	{
-		if (client_lst != sender && FD_ISSET(client_lst->fd, &fds->write))
+		if (client_lst != sender && FD_ISSET(client_lst->fd, &fds->wr))
 			send(client_lst->fd, msg, strlen(msg), 0);
 		client_lst = client_lst->next;
 	}
@@ -191,7 +191,7 @@ t_client	*receive_message(t_client *client_lst, t_fds *fds)
 		curr_cli = it;
 		it = curr_cli->next;
 		/* message receives from curr_cli */
-		if (FD_ISSET(curr_cli->fd, &fds->read))
+		if (FD_ISSET(curr_cli->fd, &fds->rd))
 		{
 			ret = recv(curr_cli->fd, buffer, BUFFER_SIZE - 1, 0);
 			/* client disconnects */
@@ -236,15 +236,15 @@ void	handle_connection(int sockfd)
 	client_id = 0;
 	while (1)
 	{
-		fds.read = fds.all;
-		fds.write = fds.all;
+		FD_COPY(&fds.all, &fds.rd);
+		FD_COPY(&fds.all, &fds.wr);
 		/* waits for a connection */
-		ret = select(maxfd + 1, &fds.read, &fds.write, NULL, NULL);
+		ret = select(maxfd + 1, &fds.rd, &fds.wr, NULL, NULL);
 		/* error case */
 		if (ret == -1)
 			exit_error("Fatal Error", NULL, fds.socket);
 		/* connection founds */
-		else if (ret > 0 && FD_ISSET(sockfd, &fds.read))
+		else if (ret > 0 && FD_ISSET(sockfd, &fds.rd))
 		{
 			len = sizeof(struct sockaddr_in);
 			connfd = accept(sockfd, (struct sockaddr *)&addr, &len);
