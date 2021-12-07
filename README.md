@@ -34,4 +34,4 @@ $ ./tester.sh
 
 Write a program that will listen for client to connect on a certain port on 127.0.0.1 and will let clients to speak with each other.
 
-*(see more in Exam_rank_06/subject.en.txt)*
+*(see more in Exam_rank_06/subject/subject.en.txt)*
