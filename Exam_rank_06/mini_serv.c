@@ -6,7 +6,7 @@
 /*   By: adbenoit <adbenoit@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/12/02 13:50:09 by adbenoit          #+#    #+#             */
-/*   Updated: 2021/12/09 14:40:06 by adbenoit         ###   ########.fr       */
+/*   Updated: 2021/12/09 14:40:31 by adbenoit         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -248,7 +248,6 @@ void	handle_connection(int sockfd)
 		{
 			len = sizeof(struct sockaddr_in);
 			connfd = accept(sockfd, (struct sockaddr *)&addr, &len);
-			// fcntl(connfd, F_SETFL, O_NONBLOCK);
 			if (connfd > 0)
 			{
 				client_lst = add_newclient(client_lst, connfd, client_id, &fds);
