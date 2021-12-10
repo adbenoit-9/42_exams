@@ -19,7 +19,7 @@
 #include <sys/select.h>
 #include <fcntl.h>
 
-#define BUFFER_SIZE 65535
+#define BUFFER_SIZE 4096
 
 typedef struct s_client
 {
@@ -126,7 +126,7 @@ void	send_message(char *msg, t_client *client_lst, t_client *sender,
 t_client	*add_newclient(t_client *client_lst, int fd, int id, t_fds *fds)
 {
 	t_client	*newcli, *last;
-	char		str[4096];
+	char		str[BUFFER_SIZE];
 
 	
 	newcli = (t_client *)malloc(sizeof(t_client));
@@ -155,7 +155,7 @@ t_client	*add_newclient(t_client *client_lst, int fd, int id, t_fds *fds)
 /* Removes a client from the list, disconnect him and informs the others. */
 t_client	*remove_client(t_client *client_lst, t_client *rmcli, t_fds *fds)
 {
-	char		str[4096];
+	char		str[BUFFER_SIZE];
 	t_client	*prev;
 
 	if (client_lst == rmcli)
@@ -180,9 +180,8 @@ t_client	*remove_client(t_client *client_lst, t_client *rmcli, t_fds *fds)
 t_client	*receive_message(t_client *client_lst, t_fds *fds)
 {
 	char		buffer[BUFFER_SIZE];
-	char		*msg;
-	char		str[5000];
-	int			ret;
+	char		*msg, *str;
+	int			ret, size;
 	t_client	*it, *curr_cli;
 
 	it = client_lst;
@@ -193,26 +192,32 @@ t_client	*receive_message(t_client *client_lst, t_fds *fds)
 		/* message receives from curr_cli */
 		if (FD_ISSET(curr_cli->fd, &fds->rd))
 		{
-			ret = recv(curr_cli->fd, buffer, BUFFER_SIZE - 1, 0);
-			/* client disconnects */
-			if (ret == 0)
-				client_lst = remove_client(client_lst, curr_cli, fds);
-			/* send messsage */
-			else if (ret != -1)
+			size = 0;
+			while ((ret = recv(curr_cli->fd, buffer, BUFFER_SIZE - 1, 0)) > 0)
 			{
+				size += ret;
 				buffer[ret] = 0;
 				curr_cli->buffer = str_join(curr_cli->buffer, buffer);
 				if (!curr_cli->buffer)
 					exit_error("Fatal Error", client_lst, fds->socket);
+			}
+			/* client disconnects */
+			if (ret != -1 && size == 0)
+				client_lst = remove_client(client_lst, curr_cli, fds);
+			/* send messsage */
+			else if (size > 0)
+			{
 				while ((ret = extract_message(&curr_cli->buffer, &msg)))
 				{
+					if (!(str = malloc(sizeof(char) * (20 + strlen(msg)))))
+						exit_error("Fatal Error", client_lst, fds->socket);
 					sprintf(str, "client %d: %s", curr_cli->id, msg);
 					send_message(str, client_lst, curr_cli, fds);
 					free(msg);
+					free(str);
 				}
 				if (ret == -1)
 					exit_error("Fatal Error", client_lst, fds->socket);
-					
 			}
 		}
 	}
@@ -222,10 +227,8 @@ t_client	*receive_message(t_client *client_lst, t_fds *fds)
 /* Waits for a connection on the server and processes it. */
 void	handle_connection(int sockfd)
 {
-	int					connfd, ret, maxfd, client_id;
-	struct sockaddr_in	addr;
+	int					connfd, maxfd, client_id;
 	t_fds				fds;
-	socklen_t			len;
 	t_client			*client_lst;
 
 	fds.socket = sockfd;
@@ -238,25 +241,23 @@ void	handle_connection(int sockfd)
 	{
 		FD_COPY(&fds.all, &fds.rd);
 		FD_COPY(&fds.all, &fds.wr);
-		/* waits for a connection */
-		ret = select(maxfd + 1, &fds.rd, &fds.wr, NULL, NULL);
-		/* error case */
-		if (ret == -1)
+		/* select ready fds */
+		if (select(maxfd + 1, &fds.rd, &fds.wr, NULL, NULL) == -1)
 			exit_error("Fatal Error", NULL, fds.socket);
-		/* connection founds */
-		else if (ret > 0 && FD_ISSET(sockfd, &fds.rd))
+		/* new connection */
+		else if (FD_ISSET(sockfd, &fds.rd))
 		{
-			len = sizeof(struct sockaddr_in);
-			connfd = accept(sockfd, (struct sockaddr *)&addr, &len);
-			if (connfd > 0)
+			connfd = accept(sockfd, NULL, NULL);
+			if (connfd >= 0)
 			{
+				// fcntl(connfd, F_SETFL, O_NONBLOCK);
 				client_lst = add_newclient(client_lst, connfd, client_id, &fds);
 				maxfd = connfd > maxfd ? connfd : maxfd;
 				++client_id;
 			}
 		}
-		else if (client_lst && ret > 0)
-			client_lst = receive_message(client_lst, &fds);
+		/* receive message */
+		client_lst = receive_message(client_lst, &fds);
 	}
 }
 
@@ -278,7 +279,7 @@ int	main(int ac, char **av)
 	servaddr.sin_port = htons(port);
 	if (bind(sockfd, (const struct sockaddr *)&servaddr, sizeof(servaddr)))
 		exit_error("Fatal Error", NULL, sockfd);
-	if (listen(sockfd, SOMAXCONN) != 0)
+	if (listen(sockfd, 10) != 0)
 		exit_error("Fatal Error", NULL, sockfd);
 	handle_connection(sockfd);
 	return (0);
