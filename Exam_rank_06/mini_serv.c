@@ -6,7 +6,7 @@
 /*   By: adbenoit <adbenoit@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/12/02 13:50:09 by adbenoit          #+#    #+#             */
-/*   Updated: 2021/12/09 14:40:31 by adbenoit         ###   ########.fr       */
+/*   Updated: 2021/12/16 15:09:59 by adbenoit         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -113,7 +113,7 @@ void	exit_error(char *str, t_client *client_lst, int sockfd)
 void	send_message(char *msg, t_client *client_lst, t_client *sender,
 			t_fds *fds)
 {
-	write(STDIN_FILENO, msg, strlen(msg));
+	write(STDIN_FILENO, msg, strlen(msg)); // optional
 	while (client_lst)
 	{
 		if (client_lst != sender && FD_ISSET(client_lst->fd, &fds->wr))
@@ -176,12 +176,32 @@ t_client	*remove_client(t_client *client_lst, t_client *rmcli, t_fds *fds)
 	return (client_lst);
 }
 
-/* Check if the server receive a message and resend it to all clients. */
-t_client	*receive_message(t_client *client_lst, t_fds *fds)
+/* Receives the entire message. Returns his size. */
+ssize_t	receive_message(t_client *client_lst, t_client *curr_cli, t_fds *fds)
 {
+	ssize_t		size, ret;
 	char		buffer[BUFFER_SIZE];
+	
+	size = 0;
+	while ((ret = recv(curr_cli->fd, buffer, BUFFER_SIZE - 1, 0)) > 0)
+	{
+		size += ret;
+		buffer[ret] = 0;
+		curr_cli->buffer = str_join(curr_cli->buffer, buffer);
+		if (!curr_cli->buffer)
+			exit_error("Fatal Error", client_lst, fds->socket);
+	}
+	if (size == 0 && ret == -1)
+		return (-1);
+	return (size);
+}
+
+
+/* Check if a client sent a message and resend it to all other clients. */
+t_client	*handle_clients(t_client *client_lst, t_fds *fds)
+{
 	char		*msg, *str;
-	int			ret, size;
+	ssize_t		ret;
 	t_client	*it, *curr_cli;
 
 	it = client_lst;
@@ -192,22 +212,14 @@ t_client	*receive_message(t_client *client_lst, t_fds *fds)
 		/* message receives from curr_cli */
 		if (FD_ISSET(curr_cli->fd, &fds->rd))
 		{
-			size = 0;
-			while ((ret = recv(curr_cli->fd, buffer, BUFFER_SIZE - 1, 0)) > 0)
-			{
-				size += ret;
-				buffer[ret] = 0;
-				curr_cli->buffer = str_join(curr_cli->buffer, buffer);
-				if (!curr_cli->buffer)
-					exit_error("Fatal Error", client_lst, fds->socket);
-			}
+			ret = receive_message(client_lst, curr_cli, fds);
 			/* client disconnects */
-			if (ret != -1 && size == 0)
+			if (ret == 0)
 				client_lst = remove_client(client_lst, curr_cli, fds);
-			/* send messsage */
-			else if (size > 0)
+			/* resend messsage line by line */
+			else if (ret > 0)
 			{
-				while ((ret = extract_message(&curr_cli->buffer, &msg)))
+				while ((ret = extract_message(&curr_cli->buffer, &msg)) == 1)
 				{
 					if (!(str = malloc(sizeof(char) * (20 + strlen(msg)))))
 						exit_error("Fatal Error", client_lst, fds->socket);
@@ -224,8 +236,8 @@ t_client	*receive_message(t_client *client_lst, t_fds *fds)
 	return (client_lst);
 }
 
-/* Waits for a connection on the server and processes it. */
-void	handle_connection(int sockfd)
+/* handle connections on the server and processes it. */
+void	handle_server(int sockfd)
 {
 	int					connfd, maxfd, client_id;
 	t_fds				fds;
@@ -256,8 +268,7 @@ void	handle_connection(int sockfd)
 				++client_id;
 			}
 		}
-		/* receive message */
-		client_lst = receive_message(client_lst, &fds);
+		client_lst = handle_clients(client_lst, &fds);
 	}
 }
 
@@ -281,6 +292,6 @@ int	main(int ac, char **av)
 		exit_error("Fatal Error", NULL, sockfd);
 	if (listen(sockfd, 10) != 0)
 		exit_error("Fatal Error", NULL, sockfd);
-	handle_connection(sockfd);
+	handle_server(sockfd);
 	return (0);
 }
