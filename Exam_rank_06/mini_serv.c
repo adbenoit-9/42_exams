@@ -6,7 +6,7 @@
 /*   By: adbenoit <adbenoit@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/12/02 13:50:09 by adbenoit          #+#    #+#             */
-/*   Updated: 2021/12/16 15:09:59 by adbenoit         ###   ########.fr       */
+/*   Updated: 2021/12/16 15:13:13 by adbenoit         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,12 +37,11 @@ typedef struct s_fds
 	int				socket;
 }				t_fds;
 
-
 /**** begin of subject functions ****/
-int extract_message(char **buf, char **msg)
+int	extract_message(char **buf, char **msg)
 {
 	char	*newbuf;
-	int	i;
+	int		i;
 
 	*msg = 0;
 	if (*buf == 0)
@@ -66,7 +65,7 @@ int extract_message(char **buf, char **msg)
 	return (0);
 }
 
-char *str_join(char *buf, char *add)
+char	*str_join(char *buf, char *add)
 {
 	char	*newbuf;
 	int		len;
@@ -86,7 +85,6 @@ char *str_join(char *buf, char *add)
 	return (newbuf);
 }
 /**** end of subject funtions ****/
-
 
 /* Clear client_lst and close fds */
 void	exit_error(char *str, t_client *client_lst, int sockfd)
@@ -128,7 +126,6 @@ t_client	*add_newclient(t_client *client_lst, int fd, int id, t_fds *fds)
 	t_client	*newcli, *last;
 	char		str[BUFFER_SIZE];
 
-	
 	newcli = (t_client *)malloc(sizeof(t_client));
 	if (!newcli)
 	{
@@ -181,7 +178,7 @@ ssize_t	receive_message(t_client *client_lst, t_client *curr_cli, t_fds *fds)
 {
 	ssize_t		size, ret;
 	char		buffer[BUFFER_SIZE];
-	
+
 	size = 0;
 	while ((ret = recv(curr_cli->fd, buffer, BUFFER_SIZE - 1, 0)) > 0)
 	{
@@ -195,7 +192,6 @@ ssize_t	receive_message(t_client *client_lst, t_client *curr_cli, t_fds *fds)
 		return (-1);
 	return (size);
 }
-
 
 /* Check if a client sent a message and resend it to all other clients. */
 t_client	*handle_clients(t_client *client_lst, t_fds *fds)
