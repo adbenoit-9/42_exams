@@ -30,7 +30,7 @@ Create some classes like the piscine CPP.
 $ cd Exam_rank_05/[cpp_module]
 $ ./tester.sh
 ```
-##   Exam Rank 06
+## ✅ Exam Rank 06
 
 ### Subject
 
